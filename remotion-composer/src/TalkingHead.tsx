@@ -305,6 +305,7 @@ export interface TalkingHeadProps {
   highlightColor?: string;
   captionColor?: string;
   captionBackgroundColor?: string;
+  captionAccentColor?: string;
   captionFontFamily?: string;
   animateCaptionWords?: boolean;
   // Pass "" for CJK captions (no inter-word spacing); defaults to " ".
@@ -320,6 +321,7 @@ export const TalkingHead: React.FC<TalkingHeadProps> = ({
   highlightColor = "#22D3EE",
   captionColor = "#FFFFFF",
   captionBackgroundColor = "rgba(0, 0, 0, 0.65)",
+  captionAccentColor,
   captionFontFamily,
   captionWordSeparator,
   animateCaptionWords = true,
@@ -358,6 +360,7 @@ export const TalkingHead: React.FC<TalkingHeadProps> = ({
         fontSize={fontSize}
         highlightColor={highlightColor}
         backgroundColor={captionBackgroundColor}
+        accentColor={captionAccentColor}
         color={captionColor}
         animateWords={animateCaptionWords}
         {...(captionFontFamily ? { fontFamily: captionFontFamily } : {})}

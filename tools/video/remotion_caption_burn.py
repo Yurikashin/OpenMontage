@@ -117,6 +117,10 @@ class RemotionCaptionBurn(BaseTool):
                 "default": True,
                 "description": "Set false to show each complete caption phrase in one color.",
             },
+            "accent_color": {
+                "type": "string",
+                "description": "Optional fixed accent line color for the caption panel.",
+            },
             "corrections": {
                 "type": "object",
                 "description": (
@@ -281,6 +285,7 @@ class RemotionCaptionBurn(BaseTool):
         font_size: int,
         highlight_color: str,
         animate_words: bool = True,
+        accent_color: str | None = None,
         overlays: list[dict] | None = None,
     ) -> ToolResult:
         root = self._find_remotion_root()
@@ -331,6 +336,7 @@ class RemotionCaptionBurn(BaseTool):
             "fontSize": font_size,
             "highlightColor": highlight_color,
             "animateCaptionWords": animate_words,
+            "captionAccentColor": accent_color,
         }
         props_dir = root / "public" / "demo-props"
         props_dir.mkdir(parents=True, exist_ok=True)
@@ -462,6 +468,7 @@ class RemotionCaptionBurn(BaseTool):
         font_size = inputs.get("font_size", 52)
         highlight_color = inputs.get("highlight_color", "#22D3EE")
         animate_words = inputs.get("animate_words", True)
+        accent_color = inputs.get("accent_color")
 
         if not Path(input_path).exists():
             return ToolResult(success=False, error=f"Input video not found: {input_path}")
@@ -494,6 +501,7 @@ class RemotionCaptionBurn(BaseTool):
                 input_path, output_path, captions,
                 words_per_page, font_size, highlight_color,
                 animate_words=animate_words,
+                accent_color=accent_color,
                 overlays=overlays,
             )
         else:

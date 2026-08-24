@@ -26,6 +26,7 @@ type CaptionOverlayProps = {
   color?: string;
   highlightColor?: string;
   backgroundColor?: string;
+  accentColor?: string;
   fontFamily?: string;
   // Show complete phrases in one color instead of word-by-word highlighting.
   animateWords?: boolean;
@@ -66,10 +67,11 @@ const PageRenderer: React.FC<{
   color: string;
   highlightColor: string;
   backgroundColor: string;
+  accentColor?: string;
   fontFamily: string;
   wordSeparator: string;
   animateWords: boolean;
-}> = ({ page, fontSize, color, highlightColor, backgroundColor, fontFamily, wordSeparator, animateWords }) => {
+}> = ({ page, fontSize, color, highlightColor, backgroundColor, accentColor, fontFamily, wordSeparator, animateWords }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -96,6 +98,7 @@ const PageRenderer: React.FC<{
           transform: `translateY(${interpolate(entrance, [0, 1], [20, 0])}px)`,
           backgroundColor,
           borderRadius: 12,
+          borderBottom: accentColor ? `5px solid ${accentColor}` : undefined,
           padding: "14px 28px",
           maxWidth: "80%",
           textAlign: "center",
@@ -153,6 +156,7 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({
   color = "#F8FAFC",
   highlightColor = "#22D3EE",
   backgroundColor = "rgba(15, 23, 42, 0.75)",
+  accentColor,
   fontFamily = "Space Grotesk, Inter, system-ui, sans-serif",
   wordSeparator = " ",
   animateWords = true,
@@ -178,6 +182,7 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({
               color={color}
               highlightColor={highlightColor}
               backgroundColor={backgroundColor}
+              accentColor={accentColor}
               fontFamily={fontFamily}
               wordSeparator={wordSeparator}
               animateWords={animateWords}
