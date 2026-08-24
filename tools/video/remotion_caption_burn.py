@@ -253,11 +253,14 @@ class RemotionCaptionBurn(BaseTool):
             per_word = (end_ms - start_ms) / max(len(words), 1)
             for i, w in enumerate(words):
                 fixed = corr.get(w.lower().strip(".,!?;:"), w)
-                captions.append({
+                caption = {
                     "word": fixed,
                     "startMs": int(start_ms + i * per_word),
                     "endMs": int(start_ms + (i + 1) * per_word),
-                })
+                }
+                if i == len(words) - 1:
+                    caption["pageBreakAfter"] = True
+                captions.append(caption)
         return captions
 
     # ------------------------------------------------------------------ #
@@ -312,7 +315,10 @@ class RemotionCaptionBurn(BaseTool):
 
         # Build props JSON
         props = {
-            "videoSrc": f"public/talking-head/{video_filename}",
+            # resolveAsset() delegates relative paths to Remotion's staticFile(),
+            # which is already rooted at public/. Including that prefix makes
+            # current Remotion versions reject the asset at render time.
+            "videoSrc": f"talking-head/{video_filename}",
             "captions": captions,
             "overlays": overlays or [],
             "wordsPerPage": words_per_page,
