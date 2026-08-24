@@ -112,6 +112,11 @@ class RemotionCaptionBurn(BaseTool):
                 "default": "#22D3EE",
                 "description": "Highlight color for the active word (hex).",
             },
+            "animate_words": {
+                "type": "boolean",
+                "default": True,
+                "description": "Set false to show each complete caption phrase in one color.",
+            },
             "corrections": {
                 "type": "object",
                 "description": (
@@ -275,6 +280,7 @@ class RemotionCaptionBurn(BaseTool):
         words_per_page: int,
         font_size: int,
         highlight_color: str,
+        animate_words: bool = True,
         overlays: list[dict] | None = None,
     ) -> ToolResult:
         root = self._find_remotion_root()
@@ -324,6 +330,7 @@ class RemotionCaptionBurn(BaseTool):
             "wordsPerPage": words_per_page,
             "fontSize": font_size,
             "highlightColor": highlight_color,
+            "animateCaptionWords": animate_words,
         }
         props_dir = root / "public" / "demo-props"
         props_dir.mkdir(parents=True, exist_ok=True)
@@ -454,6 +461,7 @@ class RemotionCaptionBurn(BaseTool):
         words_per_page = inputs.get("words_per_page", 4)
         font_size = inputs.get("font_size", 52)
         highlight_color = inputs.get("highlight_color", "#22D3EE")
+        animate_words = inputs.get("animate_words", True)
 
         if not Path(input_path).exists():
             return ToolResult(success=False, error=f"Input video not found: {input_path}")
@@ -485,6 +493,7 @@ class RemotionCaptionBurn(BaseTool):
             result = self._render_remotion(
                 input_path, output_path, captions,
                 words_per_page, font_size, highlight_color,
+                animate_words=animate_words,
                 overlays=overlays,
             )
         else:

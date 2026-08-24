@@ -306,6 +306,7 @@ export interface TalkingHeadProps {
   captionColor?: string;
   captionBackgroundColor?: string;
   captionFontFamily?: string;
+  animateCaptionWords?: boolean;
   // Pass "" for CJK captions (no inter-word spacing); defaults to " ".
   captionWordSeparator?: string;
 }
@@ -321,6 +322,7 @@ export const TalkingHead: React.FC<TalkingHeadProps> = ({
   captionBackgroundColor = "rgba(0, 0, 0, 0.65)",
   captionFontFamily,
   captionWordSeparator,
+  animateCaptionWords = true,
 }) => {
   const { fps } = useVideoConfig();
 
@@ -357,6 +359,7 @@ export const TalkingHead: React.FC<TalkingHeadProps> = ({
         highlightColor={highlightColor}
         backgroundColor={captionBackgroundColor}
         color={captionColor}
+        animateWords={animateCaptionWords}
         {...(captionFontFamily ? { fontFamily: captionFontFamily } : {})}
         {...(captionWordSeparator !== undefined ? { wordSeparator: captionWordSeparator } : {})}
       />

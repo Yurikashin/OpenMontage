@@ -27,6 +27,8 @@ type CaptionOverlayProps = {
   highlightColor?: string;
   backgroundColor?: string;
   fontFamily?: string;
+  // Show complete phrases in one color instead of word-by-word highlighting.
+  animateWords?: boolean;
   // Separator rendered between words. Space-delimited languages want the
   // default " "; CJK languages (no inter-word spacing) should pass "".
   wordSeparator?: string;
@@ -66,7 +68,8 @@ const PageRenderer: React.FC<{
   backgroundColor: string;
   fontFamily: string;
   wordSeparator: string;
-}> = ({ page, fontSize, color, highlightColor, backgroundColor, fontFamily, wordSeparator }) => {
+  animateWords: boolean;
+}> = ({ page, fontSize, color, highlightColor, backgroundColor, fontFamily, wordSeparator, animateWords }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -118,9 +121,15 @@ const PageRenderer: React.FC<{
                     // boundaries. For CJK it prevents mid-word breaks.
                     display: "inline-block",
                     whiteSpace: "nowrap",
-                    color: isActive ? highlightColor : isPast ? color : `${color}99`,
+                    color: animateWords
+                      ? isActive
+                        ? highlightColor
+                        : isPast
+                          ? color
+                          : `${color}99`
+                      : color,
                     transition: "none", // CSS transitions forbidden in Remotion
-                    textShadow: isActive
+                    textShadow: animateWords && isActive
                       ? `0 0 20px ${highlightColor}66, 0 2px 4px rgba(0,0,0,0.5)`
                       : "0 2px 4px rgba(0,0,0,0.5)",
                   }}
@@ -146,6 +155,7 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({
   backgroundColor = "rgba(15, 23, 42, 0.75)",
   fontFamily = "Space Grotesk, Inter, system-ui, sans-serif",
   wordSeparator = " ",
+  animateWords = true,
 }) => {
   const { fps } = useVideoConfig();
   const pages = buildPages(words, wordsPerPage);
@@ -170,6 +180,7 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({
               backgroundColor={backgroundColor}
               fontFamily={fontFamily}
               wordSeparator={wordSeparator}
+              animateWords={animateWords}
             />
           </Sequence>
         );

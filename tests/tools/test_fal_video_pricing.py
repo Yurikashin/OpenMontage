@@ -27,10 +27,23 @@ def test_kling_v3_exposes_multi_shot_and_audio_controls() -> None:
     assert "multi_prompt" in properties
     assert properties["shot_type"]["enum"] == ["customize", "intelligent"]
     assert properties["generate_audio"]["default"] is True
+    assert properties["multi_prompt"]["items"]["properties"]["prompt"]["maxLength"] == 512
     assert (
         VideoSelector.input_schema["properties"]["generate_audio"]["type"]
         == "boolean"
     )
+
+
+def test_kling_v3_rejects_oversized_shot_prompt_before_api_call() -> None:
+    result = KlingVideo().execute(
+        {
+            "multi_prompt": [{"prompt": "x" * 513, "duration": "5"}],
+            "duration": "5",
+        }
+    )
+
+    assert not result.success
+    assert "invalid shots: [1]" in (result.error or "")
 
 
 def test_seedance_25_uses_token_pricing_for_resolution_and_aspect_ratio() -> None:

@@ -73,7 +73,7 @@ class KlingVideo(BaseTool):
                     "type": "object",
                     "required": ["prompt", "duration"],
                     "properties": {
-                        "prompt": {"type": "string"},
+                        "prompt": {"type": "string", "maxLength": 512},
                         "duration": {
                             "type": "string",
                             "enum": [str(value) for value in range(1, 16)],
@@ -159,6 +159,20 @@ class KlingVideo(BaseTool):
         return 60.0  # ~1 minute typical
 
     def execute(self, inputs: dict[str, Any]) -> ToolResult:
+        oversized_shots = [
+            index + 1
+            for index, shot in enumerate(inputs.get("multi_prompt") or [])
+            if len(shot.get("prompt", "")) > 512
+        ]
+        if oversized_shots:
+            return ToolResult(
+                success=False,
+                error=(
+                    "Kling multi_prompt text must not exceed 512 characters "
+                    f"per shot; invalid shots: {oversized_shots}."
+                ),
+            )
+
         api_key = self._get_api_key()
         if not api_key:
             return ToolResult(

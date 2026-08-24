@@ -34,6 +34,7 @@ def test_remotion_props_use_static_file_relative_path(tmp_path, monkeypatch):
         words_per_page=4,
         font_size=46,
         highlight_color="#FF6A00",
+        animate_words=False,
     )
 
     assert result.success
@@ -41,6 +42,7 @@ def test_remotion_props_use_static_file_relative_path(tmp_path, monkeypatch):
     props = json.loads(props_path.read_text(encoding="utf-8"))
     assert props["videoSrc"] == "talking-head/source.mp4"
     assert not props["videoSrc"].startswith("public/")
+    assert props["animateCaptionWords"] is False
 
 
 def test_srt_blocks_force_caption_page_breaks(tmp_path):
