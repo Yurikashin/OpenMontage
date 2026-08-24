@@ -213,15 +213,35 @@ class SeedanceVideo(BaseTool):
 
     def estimate_cost(self, inputs: dict[str, Any]) -> float:
         if inputs.get("model_version", "2.0") == "2.5":
-            return round(
-                0.30
-                * (
-                    5
-                    if inputs.get("duration", "5") == "auto"
-                    else int(inputs.get("duration", "5"))
-                ),
-                2,
+            duration = inputs.get("duration", "5")
+            secs = 5 if duration == "auto" else int(duration)
+            resolution = inputs.get("resolution", "720p")
+            aspect_ratio = inputs.get("aspect_ratio", "16:9")
+            if aspect_ratio == "auto":
+                aspect_ratio = "16:9"
+            dimensions = {
+                "480p": {
+                    "21:9": (992, 432),
+                    "16:9": (864, 496),
+                    "4:3": (752, 560),
+                    "1:1": (640, 640),
+                    "3:4": (560, 752),
+                    "9:16": (496, 864),
+                },
+                "720p": {
+                    "21:9": (1470, 630),
+                    "16:9": (1280, 720),
+                    "4:3": (1112, 834),
+                    "1:1": (960, 960),
+                    "3:4": (834, 1112),
+                    "9:16": (720, 1280),
+                },
+            }
+            width, height = dimensions.get(resolution, dimensions["720p"]).get(
+                aspect_ratio, dimensions["720p"]["16:9"]
             )
+            tokens = width * height * secs * 24 / 1024
+            return round((tokens / 1000) * 0.0214, 2)
         variant = inputs.get("model_variant", "standard")
         duration = inputs.get("duration", "5")
         secs = 5 if duration == "auto" else int(duration)
