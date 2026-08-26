@@ -59,9 +59,29 @@ class KlingVideo(BaseTool):
 
     input_schema = {
         "type": "object",
-        "required": ["prompt"],
+        "oneOf": [
+            {"required": ["prompt"], "not": {"required": ["multi_prompt"]}},
+            {"required": ["multi_prompt"], "not": {"required": ["prompt"]}},
+        ],
         "properties": {
             "prompt": {"type": "string"},
+            "multi_prompt": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 6,
+                "items": {
+                    "type": "object",
+                    "required": ["prompt", "duration"],
+                    "properties": {
+                        "prompt": {"type": "string", "maxLength": 512},
+                        "duration": {
+                            "type": "string",
+                            "enum": [str(value) for value in range(1, 16)],
+                        },
+                    },
+                },
+                "description": "Kling V3 multi-shot storyboard. Mutually exclusive with prompt.",
+            },
             "operation": {
                 "type": "string",
                 "enum": ["text_to_video", "image_to_video"],
@@ -83,6 +103,18 @@ class KlingVideo(BaseTool):
                 "enum": ["16:9", "9:16", "1:1"],
                 "default": "16:9",
             },
+            "generate_audio": {
+                "type": "boolean",
+                "default": True,
+                "description": "Generate Kling native audio. Disable for Russian voice-over or silent footage.",
+            },
+            "shot_type": {
+                "type": "string",
+                "enum": ["customize", "intelligent"],
+                "default": "customize",
+            },
+            "negative_prompt": {"type": "string"},
+            "cfg_scale": {"type": "number", "minimum": 0, "maximum": 1},
             "image_url": {"type": "string", "description": "Reference image URL for image_to_video"},
             "output_path": {"type": "string"},
         },
@@ -92,7 +124,14 @@ class KlingVideo(BaseTool):
         cpu_cores=1, ram_mb=512, vram_mb=0, disk_mb=500, network_required=True
     )
     retry_policy = RetryPolicy(max_retries=2, retryable_errors=["rate_limit", "timeout"])
-    idempotency_key_fields = ["prompt", "model_variant", "operation", "duration"]
+    idempotency_key_fields = [
+        "prompt",
+        "multi_prompt",
+        "model_variant",
+        "operation",
+        "duration",
+        "generate_audio",
+    ]
     side_effects = ["writes video file to output_path", "calls fal.ai API"]
     user_visible_verification = ["Watch generated clip for motion coherence and visual quality"]
 
@@ -107,6 +146,9 @@ class KlingVideo(BaseTool):
     def estimate_cost(self, inputs: dict[str, Any]) -> float:
         variant = inputs.get("model_variant", "v3/standard")
         duration = int(inputs.get("duration", "5"))
+        if variant == "v3/standard":
+            rate = 0.126 if inputs.get("generate_audio", True) else 0.084
+            return round(rate * duration, 2)
         if "master" in variant:
             return 0.30 * (duration / 5)
         if "pro" in variant:
@@ -117,6 +159,20 @@ class KlingVideo(BaseTool):
         return 60.0  # ~1 minute typical
 
     def execute(self, inputs: dict[str, Any]) -> ToolResult:
+        oversized_shots = [
+            index + 1
+            for index, shot in enumerate(inputs.get("multi_prompt") or [])
+            if len(shot.get("prompt", "")) > 512
+        ]
+        if oversized_shots:
+            return ToolResult(
+                success=False,
+                error=(
+                    "Kling multi_prompt text must not exceed 512 characters "
+                    f"per shot; invalid shots: {oversized_shots}."
+                ),
+            )
+
         api_key = self._get_api_key()
         if not api_key:
             return ToolResult(
@@ -133,11 +189,23 @@ class KlingVideo(BaseTool):
         operation_path = operation.replace("_", "-")
         model_path = f"kling-video/{variant}/{operation_path}"
 
-        payload: dict[str, Any] = {"prompt": inputs["prompt"]}
+        payload: dict[str, Any] = {}
+        if inputs.get("multi_prompt"):
+            payload["multi_prompt"] = inputs["multi_prompt"]
+        elif inputs.get("prompt"):
+            payload["prompt"] = inputs["prompt"]
+        else:
+            return ToolResult(
+                success=False,
+                error="Kling requires either prompt or multi_prompt.",
+            )
         if inputs.get("duration"):
             payload["duration"] = inputs["duration"]
         if inputs.get("aspect_ratio"):
             payload["aspect_ratio"] = inputs["aspect_ratio"]
+        for field in ("generate_audio", "shot_type", "negative_prompt", "cfg_scale"):
+            if field in inputs:
+                payload[field] = inputs[field]
         if operation == "image_to_video" and inputs.get("image_url"):
             payload["image_url"] = inputs["image_url"]
 
@@ -197,9 +265,11 @@ class KlingVideo(BaseTool):
             data={
                 "provider": "kling",
                 "model": f"fal-ai/{model_path}",
-                "prompt": inputs["prompt"],
+                "prompt": inputs.get("prompt"),
+                "multi_prompt": inputs.get("multi_prompt"),
                 "operation": operation,
                 "aspect_ratio": inputs.get("aspect_ratio", "16:9"),
+                "generate_audio": inputs.get("generate_audio", True),
                 "output": str(output_path),
                 "output_path": str(output_path),
                 "format": "mp4",

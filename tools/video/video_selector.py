@@ -197,6 +197,10 @@ class VideoSelector(BaseTool):
                 "type": "string",
                 "description": "Provider-specific native audio toggle passed through when supported.",
             },
+            "generate_audio": {
+                "type": "boolean",
+                "description": "Provider-native audio toggle passed through when supported.",
+            },
             "watermark": {
                 "type": "boolean",
                 "description": "Provider-specific watermark toggle passed through when supported.",

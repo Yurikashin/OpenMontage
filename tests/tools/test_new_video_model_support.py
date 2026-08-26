@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import requests
 
 
@@ -69,6 +70,45 @@ def test_fal_seedance_25_uses_current_endpoint_and_reference_fields(
     assert payload["video_urls"] == ["https://motion"]
     assert payload["audio_urls"] == ["https://voice"]
     assert payload["duration"] == "30"
+
+
+def test_fal_kling_v3_submits_multi_shot_without_native_audio(monkeypatch, tmp_path):
+    from tools.video.kling_video import KlingVideo
+
+    monkeypatch.setenv("FAL_KEY", "test")
+    calls = _queue_mocks(monkeypatch)
+    multi_prompt = [
+        {
+            "prompt": "Close-up of a hesitant child holding a wooden block.",
+            "duration": "2",
+        },
+        {
+            "prompt": "The educator kneels and calmly invites the child.",
+            "duration": "3",
+        },
+        {"prompt": "Close-up of the wooden block handoff.", "duration": "2"},
+        {"prompt": "The child joins three children at the table.", "duration": "3"},
+    ]
+    result = KlingVideo().execute(
+        {
+            "multi_prompt": multi_prompt,
+            "model_variant": "v3/standard",
+            "duration": "10",
+            "aspect_ratio": "9:16",
+            "generate_audio": False,
+            "shot_type": "customize",
+            "output_path": str(tmp_path / "kling-multishot.mp4"),
+        }
+    )
+
+    assert result.success, result.error
+    url, payload = calls["posts"][0]
+    assert url.endswith("/fal-ai/kling-video/v3/standard/text-to-video")
+    assert payload["multi_prompt"] == multi_prompt
+    assert payload["generate_audio"] is False
+    assert payload["shot_type"] == "customize"
+    assert "prompt" not in payload
+    assert result.cost_usd == pytest.approx(0.84)
 
 
 def test_fal_gemini_omni_and_minimax_h3_are_discovered_and_submit(
