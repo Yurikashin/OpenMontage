@@ -161,6 +161,39 @@ def test_grok_executes_approved_720p_clip_without_retry(monkeypatch, tmp_path):
     )
 
 
+@pytest.mark.parametrize(
+    ("module_name", "tool_name", "inputs"),
+    [
+        (
+            "tools.graphics.polza_flux_image",
+            "PolzaFluxImage",
+            {"prompt": "bright materials", "max_cost_rub": 5},
+        ),
+        (
+            "tools.video.polza_grok_video",
+            "PolzaGrokVideo",
+            {"prompt": "bright motion", "duration": 3, "max_cost_rub": 9.2},
+        ),
+    ],
+)
+def test_polza_tools_block_live_price_above_budget(
+    monkeypatch, tmp_path, module_name, tool_name, inputs
+):
+    import importlib
+
+    module = importlib.import_module(module_name)
+    monkeypatch.setenv("POLZA_API_KEY", "placeholder")
+    monkeypatch.setattr(module, "PolzaClient", FakePolzaClient)
+    FakePolzaClient.estimate = Decimal("10")
+    inputs["output_path"] = str(tmp_path / "blocked-output.bin")
+
+    result = getattr(module, tool_name)().execute(inputs)
+
+    assert result.success is False
+    assert "exceeds max_cost_rub" in result.error
+    assert FakePolzaClient.instances[-1].generated == []
+
+
 def test_registry_discovers_polza_image_and_video_tools(monkeypatch):
     from tools.tool_registry import ToolRegistry
 

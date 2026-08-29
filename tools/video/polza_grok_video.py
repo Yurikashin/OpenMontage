@@ -6,6 +6,7 @@ import base64
 import mimetypes
 import os
 import time
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -96,6 +97,7 @@ class PolzaGrokVideo(BaseTool):
             },
             "reference_images": {"type": "array", "items": {"type": "string"}, "maxItems": 7},
             "output_path": {"type": "string"},
+            "max_cost_rub": {"type": "number", "exclusiveMinimum": 0},
             "timeout_seconds": {"type": "integer", "minimum": 30, "default": 900},
             "poll_interval_seconds": {"type": "number", "minimum": 1, "default": 5},
         },
@@ -138,6 +140,11 @@ class PolzaGrokVideo(BaseTool):
         try:
             client = PolzaClient(api_key)
             estimate = client.estimate_rub(model, payload)
+            max_cost = inputs.get("max_cost_rub")
+            if max_cost is not None and estimate > Decimal(str(max_cost)):
+                raise ValueError(
+                    f"live estimate {estimate} RUB exceeds max_cost_rub {max_cost} RUB"
+                )
             pending = client.generate(model, payload)
             completed = client.wait(
                 pending.id,
