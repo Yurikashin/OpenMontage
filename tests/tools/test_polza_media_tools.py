@@ -161,6 +161,49 @@ def test_grok_executes_approved_720p_clip_without_retry(monkeypatch, tmp_path):
     )
 
 
+def test_seedance_mini_executes_documented_720p_clip_without_retry(monkeypatch, tmp_path):
+    import tools.video.polza_seedance_mini_video as module
+    import tools.video._shared as shared
+
+    monkeypatch.setenv("POLZA_API_KEY", "placeholder")
+    monkeypatch.setattr(module, "PolzaClient", FakePolzaClient)
+    monkeypatch.setattr(shared, "probe_output", lambda path: {"width": 720, "height": 1280})
+    FakePolzaClient.estimate = Decimal("22.14")
+    output = tmp_path / "seedance.mp4"
+
+    tool = module.PolzaSeedanceMiniVideo()
+    result = tool.execute(
+        {
+            "prompt": "anonymous hands share a bright orange ball",
+            "duration": 4,
+            "resolution": "720p",
+            "aspect_ratio": "9:16",
+            "generate_audio": False,
+            "max_cost_rub": 22.14,
+            "output_path": str(output),
+        }
+    )
+
+    assert tool.retry_policy.max_retries == 0
+    assert result.success is True
+    assert result.data["estimated_cost_rub"] == 22.14
+    client = FakePolzaClient.instances[-1]
+    assert client.generated == [
+        (
+            "bytedance/seedance-2-mini",
+            {
+                "prompt": "anonymous hands share a bright orange ball",
+                "duration": "4",
+                "resolution": "720p",
+                "aspect_ratio": "9:16",
+                "images": [],
+                "videos": [],
+                "generate_audio": "false",
+            },
+        )
+    ]
+
+
 @pytest.mark.parametrize(
     ("module_name", "tool_name", "inputs"),
     [
@@ -173,6 +216,11 @@ def test_grok_executes_approved_720p_clip_without_retry(monkeypatch, tmp_path):
             "tools.video.polza_grok_video",
             "PolzaGrokVideo",
             {"prompt": "bright motion", "duration": 3, "max_cost_rub": 9.2},
+        ),
+        (
+            "tools.video.polza_seedance_mini_video",
+            "PolzaSeedanceMiniVideo",
+            {"prompt": "bright motion", "duration": 4, "max_cost_rub": 9},
         ),
     ],
 )
@@ -203,3 +251,4 @@ def test_registry_discovers_polza_image_and_video_tools(monkeypatch):
 
     assert registry.get("polza_flux_image").provider == "polza"
     assert registry.get("polza_grok_video").provider == "polza"
+    assert registry.get("polza_seedance_mini_video").provider == "polza"

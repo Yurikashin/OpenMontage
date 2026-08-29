@@ -37,6 +37,22 @@ MODEL_CATALOG = {
                 }
             },
         },
+        {
+            "id": "bytedance/seedance-2-mini",
+            "top_provider": {
+                "pricing": {
+                    "unitParam": "duration",
+                    "currency": "RUB",
+                    "tiers": [
+                        {"conditions": [], "cost_rub": "6.75000000"},
+                        {
+                            "conditions": ["resolution=720p", "has_video=false"],
+                            "cost_rub": "5.53500000",
+                        },
+                    ],
+                }
+            },
+        },
     ]
 }
 
@@ -46,6 +62,14 @@ class FakeResponse:
         self._payload = payload
         self.content = content
         self.status_code = status_code
+
+    @property
+    def text(self):
+        if isinstance(self._payload, dict):
+            import json
+
+            return json.dumps(self._payload)
+        return self.content.decode("utf-8", errors="replace")
 
     def json(self):
         return self._payload
@@ -95,6 +119,11 @@ def test_catalog_request_uses_bearer_auth_and_returns_requested_model():
         ("grok-imagine-video-1-5", {"resolution": "720p", "duration": 6}, Decimal("18.225")),
         ("black-forest-labs/flux.2-pro", {"image_resolution": "1K"}, Decimal("5")),
         ("black-forest-labs/flux.2-pro", {"image_resolution": "2K"}, Decimal("7")),
+        (
+            "bytedance/seedance-2-mini",
+            {"resolution": "720p", "has_video": False, "duration": 4},
+            Decimal("22.14000000"),
+        ),
     ],
 )
 def test_estimate_rub_selects_matching_tier_and_applies_duration(model_id, parameters, expected):
@@ -177,3 +206,22 @@ def test_errors_never_expose_api_key():
 
     assert token not in str(error.value)
     assert "<redacted>" in str(error.value)
+
+
+def test_media_error_includes_sanitized_response_detail():
+    token = "pza_super_secret"
+    session = FakeSession(
+        posts=[
+            FakeResponse(
+                {"error": {"message": f"bad duration for {token}"}},
+                status_code=400,
+            )
+        ]
+    )
+    client = PolzaClient(token, session=session)
+
+    with pytest.raises(PolzaError) as error:
+        client.generate("grok-imagine-video-1-5", {"duration": 3})
+
+    assert "bad duration" in str(error.value)
+    assert token not in str(error.value)

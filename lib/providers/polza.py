@@ -85,8 +85,24 @@ class PolzaClient:
             "Content-Type": "application/json",
         }
 
-    def _safe_error(self, action: str, exc: Exception) -> PolzaError:
-        message = str(exc).replace(self._api_key, "<redacted>")
+    def _safe_error(self, action: str, exc: Exception, response: Any | None = None) -> PolzaError:
+        detail = None
+        if response is not None:
+            try:
+                payload = response.json()
+                error = payload.get("error") if isinstance(payload, dict) else None
+                if isinstance(error, dict):
+                    detail = error.get("message") or error.get("code")
+                elif isinstance(error, str):
+                    detail = error
+                if not detail and isinstance(payload, dict):
+                    detail = payload.get("message") or payload.get("detail")
+            except Exception:
+                detail = None
+        message = str(exc)
+        if detail:
+            message = f"{message}: {detail}"
+        message = message.replace(self._api_key, "<redacted>")
         return PolzaError(f"Polza {action} failed (credentials <redacted>): {message}")
 
     def get_model(self, model_id: str) -> dict[str, Any]:
@@ -109,11 +125,16 @@ class PolzaClient:
 
     @staticmethod
     def _tier_matches(conditions: list[str], parameters: dict[str, Any]) -> bool:
+        def normalized(value: Any) -> str:
+            if isinstance(value, bool):
+                return str(value).lower()
+            return str(value)
+
         for condition in conditions:
             if "=" not in condition:
                 return False
             name, expected = condition.split("=", 1)
-            if str(parameters.get(name)) != expected:
+            if normalized(parameters.get(name)) != expected:
                 return False
         return True
 
@@ -141,6 +162,7 @@ class PolzaClient:
         return cost
 
     def generate(self, model_id: str, input_payload: dict[str, Any]) -> PolzaGeneration:
+        response = None
         try:
             response = self._session.post(
                 f"{self._base_url}/media",
@@ -151,7 +173,7 @@ class PolzaClient:
             response.raise_for_status()
             result = _generation(response.json())
         except Exception as exc:
-            raise self._safe_error("media request", exc) from exc
+            raise self._safe_error("media request", exc, response) from exc
         if not result.id:
             raise PolzaError("Polza media request returned no generation id")
         return result
