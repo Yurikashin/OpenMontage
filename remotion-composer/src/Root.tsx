@@ -16,6 +16,10 @@ import { ProductReveal, ProductRevealProps } from "./components/ProductReveal";
 import { CaptionOverlay, WordCaption } from "./components/CaptionOverlay";
 import { CollageBurst, CollageBurstProps } from "./CollageBurst";
 import { LyricOverlay, LyricOverlayProps } from "./LyricOverlay";
+import {
+  KraskiVertical,
+  calculateKraskiVerticalMetadata,
+} from "./KraskiVertical";
 
 // ---------------------------------------------------------------------------
 // Theme System — prevents every video from looking like dark fintech
@@ -190,6 +194,22 @@ export const Root: React.FC = () => {
           fontSize: 52,
           highlightColor: "#22D3EE",
         }}
+      />
+      <Composition
+        id="KraskiVertical"
+        component={KraskiVertical}
+        durationInFrames={30 * 10}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={{
+          shots: [],
+          captions: [],
+          recipe: "bright-observation",
+          accentColor: "#FF6B00",
+          backgroundColor: "#17120D",
+        }}
+        calculateMetadata={calculateKraskiVerticalMetadata}
       />
       <Composition
         id="TitledVideo"
