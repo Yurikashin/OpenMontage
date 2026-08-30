@@ -130,7 +130,9 @@ class PolzaGrokVideo(BaseTool):
         model = inputs.get("model", MODEL_ID)
         payload = {
             "prompt": inputs["prompt"],
-            "duration": int(inputs.get("duration", 3)),
+            # Polza Media validates video duration as a string even though the
+            # local tool contract exposes it as an integer.
+            "duration": str(int(inputs.get("duration", 3))),
             "resolution": inputs.get("resolution", "720p"),
             "aspect_ratio": inputs.get("aspect_ratio", "9:16"),
             "images": [_media_ref(value) for value in inputs.get("reference_images", [])],
@@ -166,7 +168,7 @@ class PolzaGrokVideo(BaseTool):
                 "model": model,
                 "request_id": pending.id,
                 "prompt": inputs["prompt"],
-                "duration": payload["duration"],
+                "duration": int(payload["duration"]),
                 "resolution": payload["resolution"],
                 "aspect_ratio": payload["aspect_ratio"],
                 "output": str(output_path),

@@ -153,7 +153,7 @@ def test_grok_executes_approved_720p_clip_without_retry(monkeypatch, tmp_path):
         "grok-imagine-video-1-5",
         {
             "prompt": "children's hands pass bright paper shapes across a table",
-            "duration": 3,
+            "duration": "3",
             "resolution": "720p",
             "aspect_ratio": "9:16",
             "images": [],
