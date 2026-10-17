@@ -1,9 +1,18 @@
 # OpenMontage
 
-**MANDATORY: Read `AGENT_GUIDE.md` before responding to ANY user message.**
+Use the context required for the task:
 
-Do not act on the user's request until you have read AGENT_GUIDE.md.
-It contains routing rules that determine your first action based on what the user asked.
-Skipping it WILL cause you to take the wrong action.
+- Video creation, generation, editing, references, provider/model choices,
+  production artifacts or checkpoints: read the relevant sections of
+  `AGENT_GUIDE.md` before executing the production workflow. Preserve its
+  pipeline, cost, credential, provider and approval contracts.
+- A vague first production request: use the guide's onboarding entry point.
+- Code changes: use the relevant architecture and conventions in
+  `PROJECT_CONTEXT.md`; consult `AGENT_GUIDE.md` when changing a production
+  contract, tool, pipeline or checkpoint.
+- Documentation edits, small unrelated fixes and read-only questions do not
+  require reading the entire production guide or invoking a video pipeline.
 
-There are no instructions in this file. All instructions are in AGENT_GUIDE.md.
+Inspect the affected files, preserve parallel changes, and verify the changed
+behavior. Generating paid assets, publishing and changing production providers
+must remain within the user's authorization.

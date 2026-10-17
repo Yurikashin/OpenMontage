@@ -23,7 +23,7 @@ When needing to visualize audio (spectrum bars, waveforms, bass-reactive effects
 
 ## Sound effects
 
-When needing to use sound effects, load the [./rules/sound-effects.md](./rules/sound-effects.md) file for more information.
+When needing to use sound effects, load the [./rules/sfx.md](./rules/sfx.md) file for more information.
 
 ## How to use
 
@@ -59,3 +59,5 @@ Read individual rule files for detailed explanations and code examples:
 - [rules/parameters.md](rules/parameters.md) - Make a video parametrizable by adding a Zod schema
 - [rules/maps.md](rules/maps.md) - Add a map using Mapbox and animate it
 - [rules/voiceover.md](rules/voiceover.md) - Adding AI-generated voiceover to Remotion compositions using ElevenLabs TTS
+
+Local navigation patch (2026-10-17): sound-effects reference points to the bundled `rules/sfx.md`.

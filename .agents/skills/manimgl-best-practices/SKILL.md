@@ -46,13 +46,16 @@ Read individual rule files for detailed explanations and code examples:
 
 ## Working Examples
 
-Complete, tested example files demonstrating common patterns:
+Local examples demonstrating common patterns (inspect before adapting; not executed by this audit):
 
-- [examples/basic_animations.py](examples/basic_animations.py) - Basic shapes, text, and animations
-- [examples/math_visualization.py](examples/math_visualization.py) - LaTeX equations and mathematical content
-- [examples/graph_plotting.py](examples/graph_plotting.py) - Axes, functions, and graphing
-- [examples/3d_visualization.py](examples/3d_visualization.py) - 3D scenes with camera control and surfaces
-- [examples/updater_patterns.py](examples/updater_patterns.py) - Dynamic animations with updaters
+- [examples/transit_animation.py](examples/transit_animation.py) - Objects crossing, timing and simple shapes
+- [examples/equation_transforms.py](examples/equation_transforms.py) - Equation transformations
+- [examples/probability_distribution.py](examples/probability_distribution.py) - Probability distributions
+- [examples/three_d_surfaces.py](examples/three_d_surfaces.py) - 3D surfaces
+- [examples/vector_fields.py](examples/vector_fields.py) - Animated vector fields
+
+Local navigation patch (2026-10-17): replaces five absent example paths with
+examples included in this checkout; no example implementation was changed.
 
 ## Scene Templates
 
